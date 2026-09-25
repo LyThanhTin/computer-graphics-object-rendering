@@ -5,7 +5,7 @@ import OpenGL.GL as GL
 import glfw
 
 from .hud import HelpOverlay, help_text
-from .transform import Trackball
+from .transform import Trackball, identity, ortho
 
 
 class Viewer:
@@ -21,6 +21,11 @@ class Viewer:
 
         self.depth = depth
         self._title = title
+
+        self.selected = None
+        self.projection = ortho(-1, 1, -1, 1, -1, 1)
+        self.view = identity()
+
         self.win = glfw.create_window(width, height, title, None, None)
         glfw.make_context_current(self.win)
         glfw.set_key_callback(self.win, self.on_key)
@@ -43,12 +48,23 @@ class Viewer:
     def add(self, *drawables):
         self.drawables.extend(drawables)
 
+        if self.selected is None and drawables:
+            self.selected = drawables[0]
+
     def _draw_matrices(self):
         """projection, view, model passed to drawable.draw(); None if unused."""
-        return None, None, None
+        return self.projection, self.view, None
 
     def _set_window_title(self):
-        glfw.set_window_title(self.win, f'{self._title}   [H] help   [Q] quit')
+        if self.selected is None:
+            text = "None"
+        else:
+            text = self.selected.__class__.__name__
+
+        glfw.set_window_title(
+            self.win,
+            f'{self._title}   [Selected: {text}]   [H] help   [Q] quit'
+        )
 
     def _ensure_hud(self):
         if self._hud is None:
@@ -88,12 +104,28 @@ class Viewer:
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, self._polygon_mode)
         elif action == glfw.PRESS and key == glfw.KEY_H:
             self.show_help = not self.show_help
-        for drawable in self.drawables:
-            if hasattr(drawable, 'key_handler'):
-                drawable.key_handler(key)
+        elif action == glfw.PRESS and key == glfw.KEY_TAB:
+            self.select_next()
+            return
+        if self.selected is not None:
+            if hasattr(self.selected, 'key_handler'):
+                self.selected.key_handler(key)
         if self._hud is not None:
             self._hud.refresh(self)
 
+    def select_next(self):
+        if not self.drawables:
+            return
+
+        if self.selected is None:
+            self.selected = self.drawables[0]
+        else:
+            index = self.drawables.index(self.selected)
+            self.selected = self.drawables[
+                (index + 1) % len(self.drawables)
+            ]
+
+        self._set_window_title()
 
 class TrackballViewer(Viewer):
     """Viewer with depth test and trackball camera."""
