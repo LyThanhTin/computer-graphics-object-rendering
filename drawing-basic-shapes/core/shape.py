@@ -1,11 +1,13 @@
 import numpy as np
 import OpenGL.GL as GL
 import glfw
+import os
 
 from cglibs.buffer import VAO
 from cglibs import transform as T
 from cglibs.shading import load_fgpi, handle_shading_key
 
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 class Shape:
     def __init__(self, shading='phong'):
@@ -13,7 +15,7 @@ class Shape:
         self.model = T.identity()
         self.vao = VAO()
         self.programs = {}
-        load_fgpi(self.programs, __file__)
+        load_fgpi(self.programs, project_root)
 
     def setup_shaders(self):
 
@@ -56,9 +58,7 @@ class Shape:
         uma.upload_uniform_matrix4fv(modelView, 'modelview', True)
 
         self.vao.activate()
-
         GL.glDrawArrays(GL.GL_TRIANGLES, 0, self.vertex_count)
-
         self.vao.deactivate()
 
     def key_handler(self, key):
@@ -66,28 +66,20 @@ class Shape:
 
         if key == glfw.KEY_R:
             self.reset_transform()
-
         elif key == glfw.KEY_UP:
             self.translate(0, 0.05)
-
         elif key == glfw.KEY_DOWN:
             self.translate(0, -0.05)
-
         elif key == glfw.KEY_LEFT:
             self.translate(-0.05, 0)
-
         elif key == glfw.KEY_RIGHT:
             self.translate(0.05, 0)
-
         elif key == glfw.KEY_EQUAL:
             self.scale(1.1)
-
         elif key == glfw.KEY_MINUS:
             self.scale(0.9)
-
         elif key == glfw.KEY_LEFT_BRACKET:
             self.rotate(angle=10)
-
         elif key == glfw.KEY_RIGHT_BRACKET:
             self.rotate(angle=-10)
 

@@ -4,7 +4,6 @@ import pandas as pd
 import sys
 import os
 
-
 class Shader:
     """ Helper class to create and automatically destroy shader program """
     def __init__(self, vertex_source, fragment_source):
@@ -24,11 +23,26 @@ class Shader:
                 print(GL.glGetProgramInfoLog(self.render_idx).decode('ascii'))
                 sys.exit(1)
 
-    def __del__(self):
-        GL.glUseProgram(0)
-        if self.render_idx:                      # if this is a valid shader object
-            GL.glDeleteProgram(self.render_idx)  # object dies => destroy GL object
+    def cleanup(self):
+        """Release the OpenGL program while a valid GLFW context exists."""
+        if not self.render_idx:
+            return
 
+        try:
+            if glfw.get_current_context() is None:
+                return
+
+            GL.glUseProgram(0)
+            GL.glDeleteProgram(self.render_idx)
+        except Exception:
+            # Cleanup must never raise during interpreter shutdown.
+            pass
+        finally:
+            self.render_idx = None
+
+    def __del__(self):
+        self.cleanup()
+        
     @staticmethod
     def _compile_shader(src, shader_type):
         src = open(src, 'r').read() if os.path.exists(src) else src

@@ -46,7 +46,6 @@ _FONT_CANDIDATES = (
     '/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf',
 )
 
-
 def _font(size):
     for path in _FONT_CANDIDATES:
         if os.path.isfile(path):
@@ -100,7 +99,6 @@ def help_text(viewer):
             lines.append(f'{key:<10} {label}')
     return '\n'.join(lines)
 
-
 class HelpOverlay:
     """Textured panel in the top-left corner. Uses texture unit 7."""
 
@@ -149,13 +147,17 @@ class HelpOverlay:
     def draw(self, win):
         import glfw
         fw, fh = glfw.get_framebuffer_size(win)
+        win_w, win_h = glfw.get_window_size(win)
         pw, ph = self.size
-        margin = 14 * (fw / max(glfw.get_window_size(win)[0], 1))
-        x0 = -1.0 + 2.0 * margin / fw
+        # Keep the HUD margin visually consistent in window pixels.
+        margin = 14 * (fw / max(win_w, 1))
+        # Top-right position
+        x1 = 1.0 - 2.0 * margin / fw
+        x0 = x1 - 2.0 * pw / fw
+
         y1 = 1.0 - 2.0 * margin / fh
-        x1 = x0 + 2.0 * pw / fw
         y0 = y1 - 2.0 * ph / fh
-        # NDC: v=0 is the first texture row = top of the PIL image
+
         quad = np.array([
             [x0, y1, 0.0, 0.0],
             [x0, y0, 0.0, 1.0],
@@ -165,26 +167,38 @@ class HelpOverlay:
 
         depth = GL.glIsEnabled(GL.GL_DEPTH_TEST)
         blend = GL.glIsEnabled(GL.GL_BLEND)
+
         GL.glDisable(GL.GL_DEPTH_TEST)
         GL.glEnable(GL.GL_BLEND)
-        GL.glBlendFunc(GL.GL_SRC_ALPHA, GL.GL_ONE_MINUS_SRC_ALPHA)
-        GL.glPolygonMode(GL.GL_FRONT_AND_BACK, GL.GL_FILL)
+        GL.glBlendFunc(
+            GL.GL_SRC_ALPHA,
+            GL.GL_ONE_MINUS_SRC_ALPHA
+        )
+
+        GL.glPolygonMode(
+            GL.GL_FRONT_AND_BACK,
+            GL.GL_FILL
+        )
 
         GL.glUseProgram(self.shader.render_idx)
         GL.glActiveTexture(GL.GL_TEXTURE0 + self._UNIT)
         GL.glBindTexture(GL.GL_TEXTURE_2D, self.tex)
+
         GL.glBindVertexArray(self.vao)
         GL.glBindBuffer(GL.GL_ARRAY_BUFFER, self.vbo)
         GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, quad)
+
         GL.glDrawArrays(GL.GL_TRIANGLE_STRIP, 0, 4)
+
         GL.glBindVertexArray(0)
 
         if depth:
             GL.glEnable(GL.GL_DEPTH_TEST)
+
         if not blend:
             GL.glDisable(GL.GL_BLEND)
-        GL.glActiveTexture(GL.GL_TEXTURE0)
 
+        GL.glActiveTexture(GL.GL_TEXTURE0)
 
 def _render_panel(rows):
     font = _font(16)

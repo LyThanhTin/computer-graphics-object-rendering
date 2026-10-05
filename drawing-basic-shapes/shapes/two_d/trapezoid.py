@@ -1,18 +1,17 @@
 import numpy as np
 import OpenGL.GL as GL
 
-from cglibs import transform as T
-from shape import Shape
+from core.shape import Shape
 
-
-class Rectangle(Shape):
-    def __init__(self, width=1.0, height=1.0, shading='phong'):
+class Trapezoid(Shape):
+    def __init__(self, top_width=0.6, bottom_width=1.0, height=0.8, shading='phong'):
         super().__init__(shading)
 
-        self.width = width
+        self.top_width = top_width
+        self.bottom_width = bottom_width
         self.height = height
         self.vertices = self._generate_vertices()
-        self.vertex_count = len(self.vertices)
+        self.vertex_count = 6
 
         self.colors = np.tile(
             np.array([[0.2, 0.7, 1.0]], dtype=np.float32),
@@ -27,17 +26,18 @@ class Rectangle(Shape):
         self.setup()
 
     def _generate_vertices(self):
-        w = self.width / 2
+        top = self.top_width / 2
+        bottom = self.bottom_width / 2
         h = self.height / 2
 
         return np.array([
-            [-w, -h, 0.0],
-            [ w, -h, 0.0],
-            [ w,  h, 0.0],
+            [-bottom, -h, 0.0],
+            [ bottom, -h, 0.0],
+            [ top,     h, 0.0],
 
-            [-w, -h, 0.0],
-            [ w,  h, 0.0],
-            [-w,  h, 0.0],
+            [-bottom, -h, 0.0],
+            [ top,     h, 0.0],
+            [-top,     h, 0.0],
         ], dtype=np.float32)
 
     def setup(self):

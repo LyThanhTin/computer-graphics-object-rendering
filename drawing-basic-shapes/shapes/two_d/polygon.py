@@ -1,7 +1,7 @@
 import numpy as np
 import OpenGL.GL as GL
 
-from shape import Shape
+from core.shape import Shape
 
 
 class Polygon(Shape):
@@ -40,12 +40,7 @@ class Polygon(Shape):
 
         for i in range(self.n):
             j = (i + 1) % self.n
-
-            vertices.extend([
-                center[0],
-                boundary[i],
-                boundary[j]
-            ])
+            vertices.extend([center[0], boundary[i], boundary[j]])
 
         return np.array(vertices, dtype=np.float32)
 

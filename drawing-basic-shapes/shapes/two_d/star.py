@@ -2,24 +2,18 @@ import numpy as np
 import OpenGL.GL as GL
 
 from cglibs import transform as T
-from shape import Shape
+from core.shape import Shape
 
 
-class Ellipse(Shape):
-    def __init__(
-        self,
-        rx=0.5,
-        ry=0.3,
-        segments=32,
-        shading='phong'
-    ):
+class Star(Shape):
+    def __init__(self, outer_radius=0.5, inner_radius=0.2, points=5, shading='phong'):
         super().__init__(shading)
 
-        self.rx = rx
-        self.ry = ry
-        self.segments = segments
+        self.outer_radius = outer_radius
+        self.inner_radius = inner_radius
+        self.points = points
         self.vertices = self._generate_vertices()
-        self.vertex_count = 3 * self.segments
+        self.vertex_count = 3 * (2 * self.points)
 
         self.colors = np.tile(
             np.array([[0.2, 0.7, 1.0]], dtype=np.float32),
@@ -34,26 +28,21 @@ class Ellipse(Shape):
         self.setup()
 
     def _generate_vertices(self):
-        angles = np.linspace(0, 2 * np.pi, self.segments, endpoint=False)
-
-        boundary = np.column_stack([
-            self.rx * np.cos(angles),
-            self.ry * np.sin(angles),
-            np.zeros(self.segments)
-        ]).astype(np.float32)
-
-        center = np.array([[0.0, 0.0, 0.0]], dtype=np.float32)
-
         vertices = []
+        center = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        total_vertices = 2 * self.points
+        angles = np.linspace(0, 2 * np.pi, total_vertices, endpoint=False)
+        boundary = []
 
-        for i in range(self.segments):
-            j = (i + 1) % self.segments
+        for i, angle in enumerate(angles):
+            radius = (self.outer_radius if i % 2 == 0 else self.inner_radius)
+            boundary.append([radius * np.cos(angle), radius * np.sin(angle), 0.0])
 
-            vertices.extend([
-                center[0],
-                boundary[i],
-                boundary[j]
-            ])
+        boundary = np.array(boundary, dtype=np.float32)
+
+        for i in range(total_vertices):
+            j = (i + 1) % total_vertices
+            vertices.extend([center, boundary[i], boundary[j]])
 
         return np.array(vertices, dtype=np.float32)
 

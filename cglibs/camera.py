@@ -1,6 +1,5 @@
 from .transform import *
 
-
 class Camera(Trackball):
     def __init__(self, yaw=0., roll=0., pitch=0., distance=3., radians=None):
         super(Camera, self).__init__(yaw=yaw, roll=roll, pitch=pitch, distance=distance, radians=radians)

@@ -14,10 +14,10 @@ def shading_files(shader_dir="./shaders"):
         'interp':  (os.path.join(shader_dir, "interp.vert"),  os.path.join(shader_dir, "interp.frag")),
     }
 
-def load_fgpi(programs, src_py):
-    """Compile F/G/P/I from ``src_py``'s ``shaders/`` folder."""
-    py_file = os.path.join(os.path.dirname(os.path.abspath(src_py)), "shaders")
-    for name, (vs, fs) in shading_files(py_file).items():
+def load_fgpi(programs, project_root):
+    """Compile F/G/P/I from the project's shaders/ folder."""
+    shader_dir = os.path.join(project_root, "shaders")
+    for name, (vs, fs) in shading_files(shader_dir).items():
         shader = Shader(vs, fs)
         programs[name] = (shader, UManager(shader))
 

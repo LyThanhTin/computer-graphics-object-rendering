@@ -1,10 +1,7 @@
 from .shader import *
 import OpenGL.GL as GL
 import cv2
-
-
-
-
+import glfw
 class VAO(object):
     def __init__(self):
 
@@ -13,8 +10,6 @@ class VAO(object):
         GL.glBindVertexArray(0)
         self.vbo = {}
         self.ebo = None
-
-
 
     def add_vbo(self, location, data,
                ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None):
@@ -35,19 +30,35 @@ class VAO(object):
         GL.glBufferData(GL.GL_ELEMENT_ARRAY_BUFFER, indices, GL.GL_STATIC_DRAW)
         self.deactivate()
 
+    def cleanup(self):
+        """Release OpenGL resources while a valid GLFW context exists."""
+        if self.vao is None:
+            return
+
+        try:
+            if glfw.get_current_context() is None:
+                return
+            GL.glDeleteVertexArrays(1, [self.vao])
+            if self.vbo:
+                GL.glDeleteBuffers(len(self.vbo), list(self.vbo.values()))
+            if self.ebo is not None:
+                GL.glDeleteBuffers(1, [self.ebo])
+        except Exception:
+            # Cleanup must never raise during interpreter shutdown.
+            pass
+        finally:
+            self.vao = None
+            self.vbo.clear()
+            self.ebo = None
 
     def __del__(self):
-        GL.glDeleteVertexArrays(1, [self.vao])
-        GL.glDeleteBuffers(1, list(self.vbo.values()))
-        if self.ebo is not None:
-            GL.glDeleteBuffers(1, [self.ebo])
+        self.cleanup()
 
     def activate(self):
         GL.glBindVertexArray(self.vao)  # activated
 
     def deactivate(self):
         GL.glBindVertexArray(0)  # activated
-
 class UManager(object):
     def __init__(self, shader):
         self.shader = shader
