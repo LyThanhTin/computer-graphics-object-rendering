@@ -5,7 +5,7 @@ from core.shape import Shape
 
 
 class Mesh(Shape):
-    def __init__(self, vertices, normals=None, colors=None, indices=None, shading='phong'):
+    def __init__(self, vertices, normals=None, colors=None, indices=None, texcoords=None, shading='phong'):
         super().__init__(shading)
 
         self.vertices = np.asarray(vertices, dtype=np.float32)
@@ -34,21 +34,44 @@ class Mesh(Shape):
             if self.colors.shape != self.vertices.shape:
                 raise ValueError("colors must have the same shape as vertices")
 
+        # Texcoords
+        self.texcoords = None
+
+        if texcoords is not None:
+            self.texcoords = np.asarray(texcoords, dtype=np.float32)
+
+            if self.texcoords.shape != (self.vertex_count, 2):
+                raise ValueError(
+                    "texcoords must have shape (vertex_count, 2)"
+                )
+
         # Indices
         self.indices = None
 
         if indices is not None:
             self.indices = np.asarray(indices, dtype=np.uint32).reshape(-1)
-
+            
         # GPU buffers
         self.vao.add_vbo(0, self.vertices, ncomponents=3)
         self.vao.add_vbo(1, self.colors, ncomponents=3)
         self.vao.add_vbo(2, self.normals, ncomponents=3)
-
+        if self.texcoords is None:
+            # Imported OBJ/PLY meshes without UVs use a planar projection.
+            self.texcoords = self.planar_texcoords(self.vertices, axes=(0, 1))
+        self.vao.add_vbo(3, self.texcoords, ncomponents=2, dtype=GL.GL_FLOAT,
+                         normalized=False, stride=0, offset=None)
+        self.supports_texture = True
         if self.indices is not None:
             self.vao.add_ebo(self.indices)
 
         self.setup_shaders()
+        from pathlib import Path
+        from cglibs.texutil import write_checker
+        texture_path = Path(__file__).resolve().parents[1] / "assets" / "checker.png"
+        texture_path.parent.mkdir(parents=True, exist_ok=True)
+        write_checker(str(texture_path))
+        _, texture_manager = self.programs["texture"]
+        texture_manager.setup_texture("texture1", str(texture_path))
 
     # Normal generation
     def _compute_vertex_normals(self):
@@ -93,6 +116,10 @@ class Mesh(Shape):
     def draw(self, projection, view, model):
         shader, uma = self.programs[self.shading]
         GL.glUseProgram(shader.render_idx)
+        if self.shading == 'texture':
+            for unit, texture in uma.textures.items():
+                GL.glActiveTexture(GL.GL_TEXTURE0 + unit)
+                GL.glBindTexture(GL.GL_TEXTURE_2D, texture['id'])
         modelView = view @ self.model
         uma.upload_uniform_matrix4fv(projection, 'projection', True)
         uma.upload_uniform_matrix4fv(modelView, 'modelview', True)

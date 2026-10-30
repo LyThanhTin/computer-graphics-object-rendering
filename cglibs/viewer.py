@@ -9,12 +9,13 @@ import os
 from .hud import HelpOverlay, help_text
 from .transform import Trackball, identity, ortho
 from .gui import GUI
+from .world_grid import WorldGrid
 
 class Viewer:
     """GLFW window: OpenGL 3.3 core, drawable list, W wireframe, Q/Esc to quit."""
 
     def __init__(self, width=640, height=480, title="Viewer",
-                 clear_color=(0.5, 0.5, 0.5, 0.1), depth=False):
+                 clear_color=(0.025, 0.018, 0.075, 1.0), depth=False):
         glfw.window_hint(glfw.CONTEXT_VERSION_MAJOR, 3)
         glfw.window_hint(glfw.CONTEXT_VERSION_MINOR, 3)
         glfw.window_hint(glfw.OPENGL_FORWARD_COMPAT, GL.GL_TRUE)
@@ -54,6 +55,7 @@ class Viewer:
         self._hud = None
         self._gui = None
         self.name = self.__class__.__name__
+        self.world_grid = None
 
     def add(self, *drawables):
         for drawable in drawables:
@@ -124,6 +126,8 @@ class Viewer:
             
             GL.glClear(clear)
             projection, view, model = self._draw_matrices()
+            if self.world_grid is not None:
+                self.world_grid.draw(projection, view)
             for drawable in self.drawables:
                 drawable.draw(projection, view, model)
             if self.show_help:
@@ -145,6 +149,8 @@ class Viewer:
             GL.glPolygonMode(GL.GL_FRONT_AND_BACK, self._polygon_mode)
         elif action == glfw.PRESS and key == glfw.KEY_H:
             self.show_help = not self.show_help
+        elif action == glfw.PRESS and key == glfw.KEY_R:
+            self.toggle_grid()
         elif key == glfw.KEY_1:
             self.add(Cube())
         elif key == glfw.KEY_2:
@@ -167,6 +173,31 @@ class Viewer:
                 self.selected.key_handler(key)
         if self._hud is not None:
             self._hud.refresh(self)
+
+    def toggle_grid(self):
+        if self.world_grid is None:
+            self.world_grid = WorldGrid()
+        self.world_grid.visible = not self.world_grid.visible
+        if self._gui is not None:
+            self._gui.refresh()
+
+    def apply_cyber_palette(self, drawable):
+        """Apply a distinct neon gradient to a regular shape's vertex colors."""
+        if not hasattr(drawable, "colors") or not hasattr(drawable, "vertex_count"):
+            return
+        from core.palette import (create_gradient_colors, CYBER_BLUE_CYAN,
+                                  CYBER_VIOLET_PINK, CYBER_CYAN_VIOLET,
+                                  CYBER_GREEN_CYAN, CYBER_ORANGE_GOLD)
+        palettes = [CYBER_BLUE_CYAN, CYBER_VIOLET_PINK, CYBER_CYAN_VIOLET,
+                    CYBER_GREEN_CYAN, CYBER_ORANGE_GOLD]
+        palette = palettes[(len(self.drawables)) % len(palettes)]
+        colors = create_gradient_colors(drawable.vertex_count, palette)
+        drawable.colors = colors
+        buffer_id = getattr(getattr(drawable, "vao", None), "vbo", {}).get(1)
+        if buffer_id is not None:
+            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, buffer_id)
+            GL.glBufferSubData(GL.GL_ARRAY_BUFFER, 0, colors.nbytes, colors)
+            GL.glBindBuffer(GL.GL_ARRAY_BUFFER, 0)
 
     def select_next(self):
         if not self.drawables:
@@ -191,6 +222,7 @@ class Viewer:
             )
 
         drawable = self.shape_factory(name)
+        self.apply_cyber_palette(drawable)
 
         self.add(drawable)
 
@@ -304,6 +336,45 @@ class Viewer:
         if self._gui is not None:
             self._gui.refresh()
 
+    def add_bohr_atom(self, element):
+        """Add a selectable Bohr-style atom from Part 2."""
+        from shapes.three_d.atomic_models import AtomicModel
+
+        drawable = AtomicModel(mode="bohr", element=element)
+        self._add_part2_drawable(drawable)
+        return drawable
+
+    def add_molecule(self, molecule):
+        """Add a selectable ball-and-stick molecule from Part 2."""
+        from shapes.three_d.atomic_models import AtomicModel
+
+        drawable = AtomicModel(mode="molecule", molecule=molecule)
+        self._add_part2_drawable(drawable)
+        return drawable
+
+    def _add_part2_drawable(self, drawable):
+        existing = sum(
+            1 for item in self.drawables
+            if item.__class__.__name__ == "AtomicModel"
+        )
+        self.add(drawable)
+        drawable.name = f"{drawable.display_name} {existing + 1}"
+
+        # Spread additional Part 2 models apart so they do not overlap.
+        if existing == 1:
+            drawable.translate(1.2, 0.0, 0.0)
+        elif existing == 2:
+            drawable.translate(-1.2, 0.0, 0.0)
+        elif existing >= 3:
+            column = (existing - 3) % 3
+            row = (existing - 3) // 3 + 1
+            drawable.translate((column - 1) * 1.2, row * 0.9, 0.0)
+
+        self.selected = drawable
+        self._set_window_title()
+        if self._gui is not None:
+            self._gui.refresh()
+
     def add_surface(self, function, xmin=-2.0, xmax=2.0, ymin=-2.0, ymax=2.0):
         from shapes.three_d.surface import Surface
 
@@ -316,6 +387,7 @@ class Viewer:
             x_segments=40,
             y_segments=40
         )
+        self.apply_cyber_palette(surface)
         self.add(surface)
         self._set_window_title()
 
@@ -328,12 +400,13 @@ class TrackballViewer(Viewer):
     """Viewer with depth test and trackball camera."""
 
     def __init__(self, width=800, height=800, title="Viewer",
-                 clear_color=(0.5, 0.5, 0.5, 0.1)):
+                 clear_color=(0.025, 0.018, 0.075, 1.0)):
         glfw.window_hint(glfw.DEPTH_BITS, 16)
         glfw.window_hint(glfw.DOUBLEBUFFER, True)
         super().__init__(width, height, title, clear_color, depth=True)
 
         self.trackball = Trackball()
+        self.world_grid = WorldGrid()
         self.mouse = (0, 0)
         glfw.set_cursor_pos_callback(self.win, self.on_mouse_move)
         glfw.set_scroll_callback(self.win, self.on_scroll)
@@ -345,6 +418,9 @@ class TrackballViewer(Viewer):
         return projection, view, None
 
     def on_mouse_move(self, win, xpos, ypos):
+        # Give the object-list scrollbar first chance to consume pointer motion.
+        if self._gui is not None and self._gui.handle_mouse_move(xpos, ypos):
+            return
         # GUI occupies the top-left region.
         if self._gui is not None:
             if (xpos <= self._gui.margin + self._gui.width and
@@ -358,6 +434,9 @@ class TrackballViewer(Viewer):
             self.trackball.pan(old, self.mouse)
 
     def on_scroll(self, win, _deltax, deltay):
+        xpos, ypos = glfw.get_cursor_pos(win)
+        if self._gui is not None and self._gui.handle_scroll(xpos, ypos, deltay):
+            return
         self.trackball.zoom(deltay, glfw.get_window_size(win)[1])
     
     def delete_selected(self):

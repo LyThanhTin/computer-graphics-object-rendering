@@ -21,9 +21,16 @@ def load_fgpi(programs, project_root):
         shader = Shader(vs, fs)
         programs[name] = (shader, UManager(shader))
 
-def load_shape_programs(programs, src_py):
-    """F/G/P/I from ``src_py``, plus shared Blinn and textured Phong."""
-    load_fgpi(programs, src_py)
+def load_shape_programs(programs, project_root):
+    """Load F/G/P/I plus textured Phong."""
+    load_fgpi(programs, project_root)
+
+    shader_dir = os.path.join(project_root, "shaders")
+    shader = Shader(
+        os.path.join(shader_dir, "phong_texture.vert"),
+        os.path.join(shader_dir, "phong_texture.frag"),
+    )
+    programs["texture"] = (shader, UManager(shader))
 
 SHADING_FILES = {
     'flat':    ("./shaders/flat.vert",    "./shaders/flat.frag"),

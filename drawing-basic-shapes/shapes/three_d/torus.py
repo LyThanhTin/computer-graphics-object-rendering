@@ -21,12 +21,6 @@ class Torus(Shape):
             np.array([[0.2, 0.7, 1.0]], dtype=np.float32),
             (self.vertex_count, 1)
         )
-        """
-        self.colors = create_gradient_colors(
-            self.vertex_count,
-            CYBER_CYAN_VIOLET
-        )
-        """
 
         self.setup()
 
@@ -85,3 +79,4 @@ class Torus(Shape):
         self.vao.add_vbo(2, self.normals,  ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
 
         self.setup_shaders()
+        self.enable_checker_texture(self.planar_texcoords(self.vertices, axes=(0, 2)))

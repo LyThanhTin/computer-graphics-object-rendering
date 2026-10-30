@@ -34,10 +34,7 @@ class OBJLoader:
         # to a final vertex index.
         self.vertex_map = {}
 
-    # =============================================================
     # Public API
-    # =============================================================
-
     def load(self):
         with open(self.filename, 'r', encoding='utf-8') as file:
             for line in file:
@@ -67,10 +64,7 @@ class OBJLoader:
 
         return vertices, normals, indices
 
-    # =============================================================
     # Parsing
-    # =============================================================
-
     def _parse_vertex(self, parts):
         if len(parts) < 4:
             raise ValueError(
@@ -173,10 +167,7 @@ class OBJLoader:
 
         return size + index
 
-    # =============================================================
     # Normal generation
-    # =============================================================
-
     def _compute_normals(self, vertices, indices):
         normals = np.zeros_like(vertices)
 

@@ -18,16 +18,11 @@ class Prism(Shape):
         self.vertices, self.normals = self._generate_mesh()
         self.vertex_count = len(self.vertices)
 
-        """
         self.colors = np.tile(
             np.array([[0.2, 0.7, 1.0]], dtype=np.float32),
             (self.vertex_count, 1)
         )
-        """
-        self.colors = create_gradient_colors(
-            self.vertex_count,
-            CYBER_VIOLET_PINK
-        )
+        
         self.setup()
 
     def _generate_mesh(self):
@@ -133,3 +128,4 @@ class Prism(Shape):
         self.vao.add_vbo(2, self.normals,  ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
 
         self.setup_shaders()
+        self.enable_checker_texture(self.planar_texcoords(self.vertices, axes=(0, 2)))

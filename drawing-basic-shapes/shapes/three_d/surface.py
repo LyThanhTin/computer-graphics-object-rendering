@@ -217,3 +217,4 @@ class Surface(Shape):
         self.vao.add_vbo(2, self.normals,  ncomponents=3, dtype=GL.GL_FLOAT, normalized=False, stride=0, offset=None)
 
         self.setup_shaders()
+        self.enable_checker_texture(self.planar_texcoords(self.vertices, axes=(0, 2)))
