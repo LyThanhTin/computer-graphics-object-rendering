@@ -42,7 +42,7 @@ The default texture image is `drawing-basic-shapes/assets/checker.png`. Press `T
 
 ## Feature — Atoms and molecules
 
-Use the **Part 2: Atoms & Molecules** buttons in the left panel:
+Use the **Atoms & Molecules** buttons in the left panel:
 
 - **Bohr H**, **Bohr C**, **Bohr O**: add simplified Bohr-style models of hydrogen, carbon, and oxygen. Electrons are distributed over the first two shells (up to two electrons in the first shell); the nucleus is represented as one simplified sphere.
 - **Molecule H2O**: adds a water ball-and-stick model with one red oxygen sphere, two white hydrogen spheres, and connecting cylinders.
