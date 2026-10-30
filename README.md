@@ -1,6 +1,6 @@
-# Computer Graphics — Assignment 1
+# 3D Geometry Lab
 
-Interactive PyOpenGL application for Assignment 1: 2D/3D Object Rendering and Visualization of Atoms and Molecules.
+Interactive PyOpenGL application for 2D/3D Object Rendering and Visualization of Atoms and Molecules.
 
 ## Setup
 
@@ -18,7 +18,7 @@ conda activate computer-graphics-object-rendering
 pip install -r requirements.txt
 ```
 
-Run the application from the project root:
+Run the application from the application root:
 
 ```bash
 cd drawing-basic-shapes
@@ -27,7 +27,7 @@ python main.py
 
 A desktop session with OpenGL 3.3 Core support is required. The application cannot render in a headless terminal without an OpenGL context/display.
 
-## Part 1 — Basic shapes
+## Feature — Basic shapes
 
 The left panel can add 2D shapes (Triangle, Rectangle, Pentagon, Hexagon, Circle, Ellipse, Trapezoid, Star, Arrow) and 3D shapes (Cube, Sphere, Cylinder, Cone, Truncated Cone, Tetrahedron, Torus, Prism, and a user-defined surface `z = f(x, y)`). OBJ and PLY models can also be imported.
 
@@ -40,7 +40,7 @@ The left panel can add 2D shapes (Triangle, Rectangle, Pentagon, Hexagon, Circle
 
 The default texture image is `drawing-basic-shapes/assets/checker.png`. Press `T` after selecting an object to apply it. Texture mapping is enabled for all built-in 2D and 3D shapes, plus imported OBJ/PLY meshes. Shapes with explicit UV layouts (such as the cube, sphere, cylinder, cone, and truncated cone) use those layouts; other shapes use a normalized planar projection, which is a practical fallback rather than a hand-authored UV unwrap.
 
-## Part 2 — Atoms and molecules
+## Feature — Atoms and molecules
 
 Use the **Part 2: Atoms & Molecules** buttons in the left panel:
 
@@ -54,16 +54,39 @@ These are schematic visualization models intended for the assignment, not scient
 
 ## Project structure
 
-- `drawing-basic-shapes/main.py`: application entry point.
-- `drawing-basic-shapes/core/`: base shape and mesh abstractions, shape factory, palette.
-- `drawing-basic-shapes/shapes/two_d/`: 2D shapes.
-- `drawing-basic-shapes/shapes/three_d/`: 3D shapes and `atomic_models.py` for Part 2.
-- `cglibs/`: OpenGL viewer, camera/transform utilities, GUI, shader and buffer helpers.
-- `drawing-basic-shapes/shaders/`: GLSL rendering programs.
+```text
+computer-graphics-object-rendering/
+│
+├── drawing-basic-shapes/
+│   ├── main.py                 # Application entry point
+│   │
+│   ├── core/                   # Core shape and mesh abstractions,
+│   │                           # shape factory, and color palette
+│   │
+│   ├── shapes/
+│   │   ├── two_d/              # 2D geometric shapes
+│   │   └── three_d/            # 3D geometric shapes and atomic models
+│   │
+│   ├── loaders/                # OBJ and PLY model loaders
+│   │
+│   ├── models/                 # Sample 3D models
+│   │
+│   ├── assets/                 # Textures and image assets
+│   │
+│   └── shaders/                # GLSL vertex and fragment shaders
+│
+├── cglibs/                     # OpenGL rendering, viewer, GUI,
+│                               # camera, transformations, and utilities
+│
+├── environment.yml             # Conda environment configuration
+├── requirements.txt            # Python dependencies
+├── .gitignore
+└── README.md
+```
 
 ## Notes
 
-- Texture mapping requires UV coordinates. The application now supplies UV coordinates for all built-in shapes; imported OBJ/PLY meshes without UVs receive a planar-projection fallback. This fallback can stretch the checker pattern on complex geometry.
+- Texture mapping requires UV coordinates. The application supplies UV coordinates for all built-in shapes; imported OBJ/PLY meshes without UVs receive a planar-projection fallback. This fallback can stretch the checker pattern on complex geometry.
 - The Bohr model and molecule feature set is implemented in `drawing-basic-shapes/shapes/three_d/atomic_models.py` and integrated into the main GUI/viewer.
 
 
@@ -72,19 +95,13 @@ These are schematic visualization models intended for the assignment, not scient
 Select a regular shape or imported OBJ/PLY mesh, then click **Upload Texture** in the Import Model section and choose a PNG, JPG/JPEG, BMP, TGA, or TIFF image. The chosen image is applied immediately; the object switches to Texture shading. Press `T` to toggle Texture shading again later. For best results, use a square or seamless image. Shapes without authored UVs use planar UV mapping, so images may stretch on complex surfaces.
 
 
-## Cybercore Y2K interface updates
+## Other interface features
 
-- Dark violet workspace with neon cyan/magenta controls.
 - Toggleable world grid and XYZ axes; use the GUI's `GRID / XYZ` control or press `R`.
 - New regular shapes receive varied neon gradients from `core/palette.py`.
 - The grid is a world-space reference overlay and is drawn behind scene geometry.
-
-
-## Object list and color controls
-
-- The Objects list has a fixed-height viewport and scrollbar. Use the mouse wheel while the pointer is over the list to browse objects; deleting a selected object refreshes the list immediately.
+- The Objects list has a fixed-height viewport and scrollbar. Use the mouse wheel while the pointer is over the list to browse objects.
 - Use **COLOR / GRADIENT** to apply a solid color from the native color picker or a preset gradient from `core/palette.py` (`blue-cyan`, `blue-violet`, `cyan-violet`, `violet-pink`, `orange-gold`, `green-cyan`, `full-spectrum`). The selected object's vertex-color buffer is updated immediately.
-- The left GUI panel is constrained to the window height. Scroll over the panel outside the Objects list to reach controls on shorter displays.
 
 ## Cube panorama texture
 
